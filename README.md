@@ -1,30 +1,76 @@
-IR PROXIMITY SENSOR USED TO COUNT THE OBJECTS.
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
-COMPONENTS REQUIRED:
+// OLED setup
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET     -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-Arduino Uno
-IR Proximity Sensor
-SSD1306 OLED Display (I2C - 128x64)
-LED (External)
-220Ω Resistor
-Breadboard & Jumper Wires
+// Pin configuration
+const int irPin = 2;    // IR sensor output
+const int ledPin = 3;   // External LED pin
 
-CIRCUIT CONNECTIONS:
+int objectCount = 0;
+bool objectPreviouslyDetected = false;
 
-1.IR Sensor
+void setup() {
+  pinMode(irPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW); // LED initially OFF
 
-VCC → 5V (Arduino)
-GND → GND
-OUT → D2 (Arduino)
+  Serial.begin(9600);
 
-2.LED + Resistor
+  // OLED initialization
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("OLED init failed!"));
+    while (1);
+  }
 
-Longer leg (anode) of LED → 220Ω resistor → D3 (Arduino)
-Shorter leg (cathode) → GND
+  // Display starting screen
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(10, 20);
+  display.print("Starting...");
+  display.display();
+  delay(2000);
+  display.clearDisplay();
+  updateOLED();
+}
 
-3.OLED Display
+void loop() {
+  int irStatus = digitalRead(irPin);
 
-VCC → 5V
-GND → GND
-SDA → A4
-SCL → A5
+  if (irStatus == LOW && !objectPreviouslyDetected) {
+    // Object just detected
+    objectCount++;
+    objectPreviouslyDetected = true;
+
+    digitalWrite(ledPin, HIGH); // Turn ON external LED
+    updateOLED();
+
+    Serial.print("Object Count: ");
+    Serial.println(objectCount);
+  }
+
+  // Reset detection flag and turn OFF LED when object is gone
+  if (irStatus == HIGH) {
+    objectPreviouslyDetected = false;
+    digitalWrite(ledPin, LOW); // Turn OFF external LED
+  }
+
+  delay(50); // debounce delay
+}
+
+void updateOLED() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(10, 10);
+  display.print("Objects:");
+  display.setCursor(10, 35);
+  display.print(objectCount);
+  display.display();
+}
