@@ -1,78 +1,30 @@
-# IR-proximity-sensor-used-to-count-the-objects
-.
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+IR PROXIMITY SENSOR USED TO COUNT THE OBJECTS.
 
-// OLED setup
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET     -1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+COMPONENTS REQUIRED:
 
-// Pin configuration
-const int irPin = 2;    // IR sensor output
-const int ledPin = 3;   // External LED pin
+Arduino Uno
+IR Proximity Sensor
+SSD1306 OLED Display (I2C - 128x64)
+LED (External)
+220Ω Resistor
+Breadboard & Jumper Wires
 
-int objectCount = 0;
-bool objectPreviouslyDetected = false;
+CIRCUIT CONNECTIONS:
 
-void setup() {
-  pinMode(irPin, INPUT);
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW); // LED initially OFF
+1.IR Sensor
 
-  Serial.begin(9600);
+VCC → 5V (Arduino)
+GND → GND
+OUT → D2 (Arduino)
 
-  // OLED initialization
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println(F("OLED init failed!"));
-    while (1);
-  }
+2.LED + Resistor
 
-  // Display starting screen
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(10, 20);
-  display.print("Starting...");
-  display.display();
-  delay(2000);
-  display.clearDisplay();
-  updateOLED();
-}
+Longer leg (anode) of LED → 220Ω resistor → D3 (Arduino)
+Shorter leg (cathode) → GND
 
-void loop() {
-  int irStatus = digitalRead(irPin);
+3.OLED Display
 
-  if (irStatus == LOW && !objectPreviouslyDetected) {
-    // Object just detected
-    objectCount++;
-    objectPreviouslyDetected = true;
-
-    digitalWrite(ledPin, HIGH); // Turn ON external LED
-    updateOLED();
-
-    Serial.print("Object Count: ");
-    Serial.println(objectCount);
-  }
-
-  // Reset detection flag and turn OFF LED when object is gone
-  if (irStatus == HIGH) {
-    objectPreviouslyDetected = false;
-    digitalWrite(ledPin, LOW); // Turn OFF external LED
-  }
-
-  delay(50); // debounce delay
-}
-
-void updateOLED() {
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(10, 10);
-  display.print("Objects:");
-  display.setCursor(10, 35);
-  display.print(objectCount);
-  display.display();
-}
+VCC → 5V
+GND → GND
+SDA → A4
+SCL → A5
